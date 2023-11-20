@@ -165,7 +165,7 @@ public class AdminController {
 
     @GetMapping("/viewShopsUser")
     public String viewShopsUser(@RequestParam(name = "userId") long userId, Model model){
-        List<Organization> userShopList = shopService.getListActivityShopForCurrentUser(userService.getUserById(userId));
+        List<Organization> userShopList = shopService.getListActivityShopForUser(userService.getUserById(userId));
         model.addAttribute("allShops",userShopList);
         return "admin/shops";
     }

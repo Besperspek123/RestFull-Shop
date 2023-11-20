@@ -4,17 +4,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import spring.rest.shop.springrestshop.aspect.SecurityContext;
-import spring.rest.shop.springrestshop.dto.shop.ShopDTO;
 import spring.rest.shop.springrestshop.dto.shop.ShopEditDTO;
 import spring.rest.shop.springrestshop.entity.*;
 import spring.rest.shop.springrestshop.exception.EmptyFieldException;
 import spring.rest.shop.springrestshop.exception.EntityNotFoundException;
+import spring.rest.shop.springrestshop.exception.UserNotFoundException;
 import spring.rest.shop.springrestshop.repository.*;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,10 +28,18 @@ public class ShopService {
 
 
 
-    public List<Organization> getListActivityShopForCurrentUser(User currentUser){
+    public List<Organization> getListActivityShopForUser(User user){
+        if(user == null){
+            throw new UserNotFoundException("User cant be null");
+        }
+        return shopRepository.getAllByOwnerAndActivityTrue(user);
+    }
+    public List<Organization> getListActivityShopForCurrentUser(){
+        User currentUser = SecurityContext.getCurrentUser();
         return shopRepository.getAllByOwnerAndActivityTrue(currentUser);
     }
-    public List<Organization> getListModerationShopForCurrentUser(User currentUser){
+    public List<Organization> getListModerationShopForCurrentUser(){
+        User currentUser = SecurityContext.getCurrentUser();
         return shopRepository.getAllByOwnerAndActivityFalse(currentUser);
     }
 

@@ -576,7 +576,6 @@ class UserServiceTest {
         currentUser.getRoles().add(Role.ROLE_ADMIN);
         try (MockedStatic<SecurityContext> mocked = mockStatic(SecurityContext.class)) {
             mocked.when(SecurityContext::getCurrentUser).thenReturn(currentUser);
-            User userForAddBalance = null;
             when(userRepository.findById(2L)).thenReturn(null);
             assertThrows(UsernameNotFoundException.class,() -> userService.addBalance(2L,1000));
 

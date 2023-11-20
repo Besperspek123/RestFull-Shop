@@ -2,7 +2,6 @@ package spring.rest.shop.springrestshop.controller;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.aspectj.weaver.ast.Or;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -31,63 +30,63 @@ public class ShopController {
     ProductService productService;
 
 
-            @GetMapping("/shop")
-            public String pageMyShop(Model model){
-                User currentUser = SecurityContext.getCurrentUser();
-                List<Organization> listActiveShopForCurrentUser = shopService.
-                        getListActivityShopForCurrentUser(currentUser);
-                List<Organization> listModerationShopForCurrentUser = shopService.getListModerationShopForCurrentUser(currentUser);
+    @GetMapping("/shop")
+    public String pageMyShop(Model model) {
+        List<Organization> listActiveShopForCurrentUser = shopService.
+                getListActivityShopForCurrentUser();
+        List<Organization> listModerationShopForCurrentUser = shopService.getListModerationShopForCurrentUser();
 
-                model.addAttribute("listActiveShopForCurrentUser",listActiveShopForCurrentUser);
-                model.addAttribute("listModerationShopForCurrentUser",listModerationShopForCurrentUser);
-                return "shop/shop-page";
-            }
+        model.addAttribute("listActiveShopForCurrentUser", listActiveShopForCurrentUser);
+        model.addAttribute("listModerationShopForCurrentUser", listModerationShopForCurrentUser);
+        return "shop/shop-page";
+    }
 
-        @GetMapping("/addShop")
-        public String addShopPage(Model model){
-            model.addAttribute("shopForm",new Organization());
+    @GetMapping("/addShop")
+    public String addShopPage(Model model) {
+        model.addAttribute("shopForm", new Organization());
+        return "shop/add-shop";
+    }
+
+    @PostMapping("/addShop")
+    public String addShop(@ModelAttribute("shopForm") @Validated Organization shopForm,
+                          BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
             return "shop/add-shop";
         }
-
-        @PostMapping("/addShop")
-    public String addShop(@ModelAttribute("shopForm") @Validated Organization shopForm,
-                          BindingResult bindingResult){
-            if (bindingResult.hasErrors()) {
-                return "shop/add-shop";
-            }
-                shopService.saveShop(shopForm);
+        shopService.saveShop(shopForm);
 
 
-            return "redirect:/shop";
+        return "redirect:/shop";
+    }
+
+
+    @GetMapping("/editShop")
+    public String editShop(@RequestParam("shopId") int shopId, Model model) {
+        User currentUser = SecurityContext.getCurrentUser();
+        if (shopService.getShopDetails(shopId).getOwner() == currentUser
+                || currentUser.getRoles().stream().anyMatch(role -> role.name().equals("ROLE_ADMIN"))) {
+            Organization currentShop = shopService.getShopDetails(shopId);
+            model.addAttribute("shopForm", currentShop);
         }
 
+        return "shop/add-shop";
+    }
 
-        @GetMapping("/editShop")
-        public String editShop (@RequestParam("shopId") int shopId, Model model){
-                User currentUser = SecurityContext.getCurrentUser();
-            if(shopService.getShopDetails(shopId).getOwner() == currentUser
-                    || currentUser.getRoles().stream().anyMatch(role -> role.name().equals("ROLE_ADMIN"))){
-                Organization currentShop = shopService.getShopDetails(shopId);
-                        model.addAttribute("shopForm",currentShop);
-            }
-
-                return "shop/add-shop";
-        }
-        @PostMapping("/deleteShop")
-        public String deleteShop(@RequestParam("shopId") int shopId,Model model,Authentication authentication) throws EntityNotFoundException {
-            User currentUser = userService.findUserByUsername(authentication.getName());
-            if(shopService.getShopDetails(shopId).getOwner() == currentUser
-                    || currentUser.getRoles().stream().anyMatch(role -> role.name().equals("ROLE_ADMIN"))){
-                shopService.deleteShop(shopId);
-            }
-
-            return"redirect:/shop" ;
+    @PostMapping("/deleteShop")
+    public String deleteShop(@RequestParam("shopId") int shopId, Model model, Authentication authentication) throws EntityNotFoundException {
+        User currentUser = userService.findUserByUsername(authentication.getName());
+        if (shopService.getShopDetails(shopId).getOwner() == currentUser
+                || currentUser.getRoles().stream().anyMatch(role -> role.name().equals("ROLE_ADMIN"))) {
+            shopService.deleteShop(shopId);
         }
 
-        @GetMapping("/viewShop")
-        public String viewShop(@RequestParam("shopId") int id,Model model){
-            model.addAttribute("currentShop",shopService.getShopDetails(id));
-            return "shop/details";
+        return "redirect:/shop";
+    }
 
-        }
+    @GetMapping("/viewShop")
+    public String viewShop(@RequestParam("shopId") int id, Model model) {
+        model.addAttribute("currentShop", shopService.getShopDetails(id));
+        return "shop/details";
+
+    }
 }

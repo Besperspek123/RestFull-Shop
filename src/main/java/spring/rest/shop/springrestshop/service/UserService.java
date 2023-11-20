@@ -101,7 +101,7 @@ public class UserService implements UserDetailsService {
         if (!givenUser.getPassword().equals(givenUser.getPasswordConfirm())) {
             throw new UserPasswordAndConfirmPasswordIsDifferentException("Your password and confirm password are different");
         }
-            if(givenUser.getPassword() == null || givenUser.getPassword().isEmpty()){
+            if(givenUser.getPassword().isEmpty()){
                 givenUser.setPassword(userRepository.findById((long) givenUser.getId()).getPassword());
             }
                 else givenUser.setPassword(bCryptPasswordEncoder.encode(givenUser.getPassword()));
