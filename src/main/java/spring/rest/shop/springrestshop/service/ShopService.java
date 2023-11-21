@@ -36,7 +36,7 @@ public class ShopService {
     }
     public List<Organization> getListActivityShopForCurrentUser(){
         User currentUser = SecurityContext.getCurrentUser();
-        if(currentUser==null || currentUser.getId() == null){
+        if(currentUser==null || currentUser.getId() == null ){
             throw new NullPointerException("User cant be null");
         }
         return shopRepository.getAllByOwnerAndActivityTrue(currentUser);
