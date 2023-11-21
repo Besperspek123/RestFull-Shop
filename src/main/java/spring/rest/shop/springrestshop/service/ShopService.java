@@ -29,13 +29,16 @@ public class ShopService {
 
 
     public List<Organization> getListActivityShopForUser(User user){
-        if(user == null){
-            throw new UserNotFoundException("User cant be null");
+        if(user == null || user.getId() == null){
+            throw new NullPointerException("Id can`t be null");
         }
         return shopRepository.getAllByOwnerAndActivityTrue(user);
     }
     public List<Organization> getListActivityShopForCurrentUser(){
         User currentUser = SecurityContext.getCurrentUser();
+        if(currentUser==null || currentUser.getId() == null){
+            throw new NullPointerException("User cant be null");
+        }
         return shopRepository.getAllByOwnerAndActivityTrue(currentUser);
     }
     public List<Organization> getListModerationShopForCurrentUser(){
