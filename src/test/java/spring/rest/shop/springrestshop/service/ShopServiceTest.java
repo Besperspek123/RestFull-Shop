@@ -1,5 +1,6 @@
 package spring.rest.shop.springrestshop.service;
 
+import org.aspectj.weaver.ast.Or;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -10,6 +11,7 @@ import spring.rest.shop.springrestshop.aspect.SecurityContext;
 import spring.rest.shop.springrestshop.entity.Organization;
 import spring.rest.shop.springrestshop.entity.Role;
 import spring.rest.shop.springrestshop.entity.User;
+import spring.rest.shop.springrestshop.exception.EmptyFieldException;
 import spring.rest.shop.springrestshop.exception.UserNotFoundException;
 import spring.rest.shop.springrestshop.repository.ShopRepository;
 
@@ -124,6 +126,152 @@ class ShopServiceTest {
 
         }
     }
+    @Test
+    void getListModerationShopForCurrentUser_ShouldReturnListWithShopsThatActivityIsFalse(){
+        User currentUser = new User(1L, "admin", true, "password", "password", "email");
+        List<Organization> organizationList = currentUser.getOrganizationList();
+        organizationList.add(new Organization("shop1"));
+        organizationList.add(new Organization("shop2"));
+        organizationList.add(new Organization("shop3"));
+        organizationList.get(0).setActivity(true);
+        organizationList.get(1).setActivity(false);
+        organizationList.get(2).setActivity(true);
+        organizationList.get(0).setOwner(currentUser);
+        organizationList.get(1).setOwner(currentUser);
+        organizationList.get(2).setOwner(currentUser);
+        try (MockedStatic<SecurityContext> mocked = mockStatic(SecurityContext.class)) {
+            mocked.when(SecurityContext::getCurrentUser).thenReturn(currentUser);
+            List<Organization> excepctedList = new ArrayList<>();
+            excepctedList.add(organizationList.get(1));
+            when(shopRepository.getAllByOwnerAndActivityFalse(currentUser)).thenReturn(excepctedList);
+            List<Organization> actialList = shopService.getListModerationShopForCurrentUser();
+            assertEquals(actialList,excepctedList);
+            assertFalse(actialList.get(0).isActivity());
+            verify(shopRepository).getAllByOwnerAndActivityFalse(currentUser);
+        }
+    }
+    @Test
+    void getListModerationShopForCurrentUser_ShouldReturnEmptyList(){
+        User currentUser = new User(1L, "admin", true, "password", "password", "email");
+        List<Organization> organizationList = currentUser.getOrganizationList();
+        organizationList.add(new Organization("shop1"));
+        organizationList.add(new Organization("shop2"));
+        organizationList.add(new Organization("shop3"));
+        organizationList.get(0).setActivity(false);
+        organizationList.get(1).setActivity(false);
+        organizationList.get(2).setActivity(false);
+        organizationList.get(0).setOwner(currentUser);
+        organizationList.get(1).setOwner(currentUser);
+        organizationList.get(2).setOwner(currentUser);
+        try (MockedStatic<SecurityContext> mocked = mockStatic(SecurityContext.class)) {
+            mocked.when(SecurityContext::getCurrentUser).thenReturn(currentUser);
+            List<Organization> excepctedList = new ArrayList<>();
+            when(shopRepository.getAllByOwnerAndActivityFalse(currentUser)).thenReturn(excepctedList);
+            List<Organization> actialList = shopService.getListModerationShopForCurrentUser();
+            assertEquals(actialList,excepctedList);
+            assertEquals(actialList.size(),0);
+            verify(shopRepository).getAllByOwnerAndActivityFalse(currentUser);
+        }
+    }
+    @Test
+    void getListModerationShopForCurrentUserThatIsNull_ShouldThrowException(){
+        User currentUser = null;
+
+        try (MockedStatic<SecurityContext> mocked = mockStatic(SecurityContext.class)) {
+            mocked.when(SecurityContext::getCurrentUser).thenReturn(currentUser);
+            assertThrows(NullPointerException.class,() -> shopService.getListModerationShopForCurrentUser());
+        }
+    }
+    @Test
+    void getListModerationShopForCurrentUserThatIdIsNull_ShouldThrowException(){
+        User currentUser = new User(null, "admin", true, "password", "password", "email");
+        try (MockedStatic<SecurityContext> mocked = mockStatic(SecurityContext.class)) {
+            mocked.when(SecurityContext::getCurrentUser).thenReturn(currentUser);
+            assertThrows(NullPointerException.class,() -> shopService.getListModerationShopForCurrentUser());
+        }
+    }
+
+    @Test
+    void saveShopThatNameIsEmpty_ShouldThrowException(){
+        User currentUser = new User(1L, "admin", true, "password", "password", "email");
+        Organization shop = new Organization();
+        try (MockedStatic<SecurityContext> mocked = mockStatic(SecurityContext.class)) {
+            mocked.when(SecurityContext::getCurrentUser).thenReturn(currentUser);
+            assertThrows(EmptyFieldException.class, () ->shopService.saveShop(shop));
+        }
+
+    }
+    @Test
+    void saveShopThatNameIsNull_ShouldThrowException(){
+        User currentUser = new User(1L, "admin", true, "password", "password", "email");
+        Organization shop = new Organization();
+        try (MockedStatic<SecurityContext> mocked = mockStatic(SecurityContext.class)) {
+            mocked.when(SecurityContext::getCurrentUser).thenReturn(currentUser);
+            shop.setName(null);
+            assertThrows(EmptyFieldException.class, () ->shopService.saveShop(shop));
+
+        }
+
+    }
+    @Test
+    void CurrentUserThatIsNull_TryToSaveShop_ShouldThrowException() {
+        User currentUser = null;
+        Organization shop = new Organization();
+        shop.setName("shop");
+        shop.setDescription("description");
+        try (MockedStatic<SecurityContext> mocked = mockStatic(SecurityContext.class)) {
+            mocked.when(SecurityContext::getCurrentUser).thenReturn(currentUser);
+            assertThrows(NullPointerException.class, () -> shopService.saveShop(shop));
+
+        }
+    }
+    @Test
+    void CurrentUserThatIdIsNull_TryToSaveShop_ShouldThrowException() {
+        User currentUser = new User(null, "admin", true, "password", "password", "email");
+
+        Organization shop = new Organization();
+        shop.setName("shop");
+        shop.setDescription("description");
+        try (MockedStatic<SecurityContext> mocked = mockStatic(SecurityContext.class)) {
+            mocked.when(SecurityContext::getCurrentUser).thenReturn(currentUser);
+            assertThrows(NullPointerException.class, () -> shopService.saveShop(shop));
+
+        }
+    }
+    @Test
+    void saveShop_ShouldSaveShop(){
+        User currentUser = new User(1L, "user", true, "password", "password", "email");
+        Organization shop = new Organization();
+        shop.setName("shop");
+        shop.setDescription("description");
+        try (MockedStatic<SecurityContext> mocked = mockStatic(SecurityContext.class)) {
+            mocked.when(SecurityContext::getCurrentUser).thenReturn(currentUser);
+            shopService.saveShop(shop);
+            assertEquals(currentUser,shop.getOwner());
+            assertFalse(shop.isActivity());
+            assertFalse(shop.getName().isEmpty());
+            verify(shopRepository).save(shop);
+        }
+    }
+    @Test
+    void CurrentUserTryToSaveShopThatIdIsNotNull_ShouldSaveShop(){
+        User currentUser = new User(1L, "user", true, "password", "password", "email");
+        Organization shop = new Organization();
+        shop.setId(1L);
+        shop.setName("shop");
+        shop.setDescription("description");
+        try (MockedStatic<SecurityContext> mocked = mockStatic(SecurityContext.class)) {
+            mocked.when(SecurityContext::getCurrentUser).thenReturn(currentUser);
+            shopService.saveShop(shop);
+            assertEquals(currentUser,shop.getOwner());
+            assertFalse(shop.isActivity());
+            assertFalse(shop.getName().isEmpty());
+            verify(shopRepository).save(shop);
+        }
+    }
+
+
+
 
 
 }

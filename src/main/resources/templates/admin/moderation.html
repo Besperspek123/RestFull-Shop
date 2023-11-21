@@ -76,7 +76,7 @@
         <button class="btn btn-outline-success" type="submit">Search</button>
     </form>
 
-    <form th:if="${allShops.size()>0}" class="button-moderation" th:action="@{/admin/appr  oveAllShops}" method="post">
+    <form th:if="${allShops.size()>0}" class="button-moderation" th:action="@{/admin/approveAllShops}" method="post">
         <button type="submit" class="btn btn-primary">Approve All</button>
     </form>
     <form th:if="${allShops.size()>0}" class="button-moderation" th:action="@{/admin/disapproveAllShops}" method="post">

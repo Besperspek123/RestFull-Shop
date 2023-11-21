@@ -43,6 +43,9 @@ public class ShopService {
     }
     public List<Organization> getListModerationShopForCurrentUser(){
         User currentUser = SecurityContext.getCurrentUser();
+        if (currentUser == null || currentUser.getId()==null){
+            throw new NullPointerException("User cant be null");
+        }
         return shopRepository.getAllByOwnerAndActivityFalse(currentUser);
     }
 
@@ -63,22 +66,16 @@ public class ShopService {
 //    }
 
     public void saveShop(Organization shop){
+        User currentUser =SecurityContext.getCurrentUser();
+        if(currentUser == null || currentUser.getId() == null){
+            throw new NullPointerException("User cant be null");
+        }
         if (shop.getName() == null || shop.getName().isEmpty()){
             throw new EmptyFieldException("Shop name cant be empty");
         }
-        User currentUser =SecurityContext.getCurrentUser();
-        if (shop.getId() == 0){
-            shop.setOwner(currentUser);
-        }
-        else {
-            shop.setOwner(shopRepository.getOrganizationById(shop.getId()).getOwner());
-        }
-        if(!shop.getOwner().getRoles().contains(Role.ROLE_ADMIN)){
-            shop.setActivity(false);
-        }
-        else {shop.setActivity(true);}
+        shop.setOwner(currentUser);
+        shop.setActivity(false);
         shopRepository.save(shop);
-
 
     }
 
@@ -88,12 +85,13 @@ public class ShopService {
             throw new EntityNotFoundException("Shop with ID: " + shopId);
         }
         Organization shop = shopRepository.getOrganizationById(shopId);
-        if(shopForEdit.getName() != null){
-            shop.setName(shopForEdit.getName());
+        if(shopForEdit.getName() == null){
+            throw new EmptyFieldException("Name cant be null");
         }
         if(shopForEdit.getDescription() != null){
             shop.setDescription(shopForEdit.getDescription());
         }
+        shop.setName(shopForEdit.getName());
         shopRepository.save(shop);
     }
 
