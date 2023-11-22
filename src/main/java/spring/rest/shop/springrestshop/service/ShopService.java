@@ -2,6 +2,7 @@ package spring.rest.shop.springrestshop.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import spring.rest.shop.springrestshop.aspect.SecurityContext;
 import spring.rest.shop.springrestshop.dto.shop.ShopEditDTO;
@@ -79,20 +80,23 @@ public class ShopService {
 
     }
 
-    public void editShop(long shopId, ShopEditDTO shopForEdit) throws EntityNotFoundException {
-
-        if(shopRepository.getOrganizationById(shopId) == null) {
+    public void editShop(long shopId, ShopEditDTO shopForEdit){
+        User currentUser =SecurityContext.getCurrentUser();
+        Organization actualShop = shopRepository.getOrganizationById(shopId);
+        if(actualShop == null) {
             throw new EntityNotFoundException("Shop with ID: " + shopId);
         }
-        Organization shop = shopRepository.getOrganizationById(shopId);
-        if(shopForEdit.getName() == null){
+        if(!currentUser.getRoles().contains(Role.ROLE_ADMIN) && actualShop.getOwner() != currentUser){
+            throw new AccessDeniedException("You dont have access");
+        }
+        if(shopForEdit.getName() == null || shopForEdit.getName().isEmpty()){
             throw new EmptyFieldException("Name cant be null");
         }
         if(shopForEdit.getDescription() != null){
-            shop.setDescription(shopForEdit.getDescription());
+            actualShop.setDescription(shopForEdit.getDescription());
         }
-        shop.setName(shopForEdit.getName());
-        shopRepository.save(shop);
+        actualShop.setName(shopForEdit.getName());
+        shopRepository.save(actualShop);
     }
 
     public Organization getShopDetails(long id){

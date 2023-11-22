@@ -7,11 +7,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 import spring.rest.shop.springrestshop.aspect.SecurityContext;
+import spring.rest.shop.springrestshop.dto.shop.ShopEditDTO;
 import spring.rest.shop.springrestshop.entity.Organization;
 import spring.rest.shop.springrestshop.entity.Role;
 import spring.rest.shop.springrestshop.entity.User;
 import spring.rest.shop.springrestshop.exception.EmptyFieldException;
+import spring.rest.shop.springrestshop.exception.EntityNotFoundException;
 import spring.rest.shop.springrestshop.exception.UserNotFoundException;
 import spring.rest.shop.springrestshop.repository.ShopRepository;
 
@@ -269,6 +272,109 @@ class ShopServiceTest {
             verify(shopRepository).save(shop);
         }
     }
+
+    @Test
+    void CurrentOwnerOfShopTryToEditShop_ShouldEditShop(){
+        User currentUser = new User(1L, "user", true, "password", "password", "email");
+        Organization shopOfUser = new Organization("shop");
+        shopOfUser.setId(1L);
+        shopOfUser.setOwner(currentUser);
+        currentUser.getOrganizationList().add(shopOfUser);
+        ShopEditDTO newShop = new ShopEditDTO();
+        newShop.setName("newShop");
+        newShop.setDescription("newDescription");
+        try (MockedStatic<SecurityContext> mocked = mockStatic(SecurityContext.class)) {
+            mocked.when(SecurityContext::getCurrentUser).thenReturn(currentUser);
+            when(shopRepository.getOrganizationById(1L)).thenReturn(shopOfUser);
+            shopService.editShop(1L,newShop);
+            assertEquals(shopOfUser.getName(),"newShop");
+            assertEquals(shopOfUser.getDescription(),"newDescription");
+            assertEquals(shopOfUser.getOwner(),currentUser);
+            verify(shopRepository).save(shopOfUser);
+        }
+
+    }
+
+    @Test
+    void AnotherUserTryToEditNotHisShop_ShouldThrowException(){
+        User currentUser = new User(1L, "user", true, "password", "password", "email");
+        Organization shopOfUser = new Organization("shop");
+        shopOfUser.setId(1L);
+        currentUser.getOrganizationList().add(shopOfUser);
+        ShopEditDTO newShop = new ShopEditDTO();
+        newShop.setName("newShop");
+        newShop.setDescription("newDescription");
+        try (MockedStatic<SecurityContext> mocked = mockStatic(SecurityContext.class)) {
+            mocked.when(SecurityContext::getCurrentUser).thenReturn(currentUser);
+            when(shopRepository.getOrganizationById(1L)).thenReturn(shopOfUser);
+            assertThrows(AccessDeniedException.class,() -> shopService.editShop(1L,newShop));
+
+        }
+
+    }
+    @Test
+    void AdminTryToEditShop_ShouldEditShop(){
+        User currentUser = new User(1L, "user", true, "password", "password", "email");
+        currentUser.getRoles().add(Role.ROLE_ADMIN);
+        Organization shopOfUser = new Organization("shop");
+        shopOfUser.setId(1L);
+        currentUser.getOrganizationList().add(shopOfUser);
+        ShopEditDTO newShop = new ShopEditDTO();
+        newShop.setName("newShop");
+        newShop.setDescription("newDescription");
+        try (MockedStatic<SecurityContext> mocked = mockStatic(SecurityContext.class)) {
+            mocked.when(SecurityContext::getCurrentUser).thenReturn(currentUser);
+            when(shopRepository.getOrganizationById(1L)).thenReturn(shopOfUser);
+            shopService.editShop(1L,newShop);
+            assertEquals(shopOfUser.getName(),"newShop");
+            assertEquals(shopOfUser.getDescription(),"newDescription");
+            verify(shopRepository).save(shopOfUser);
+
+        }
+
+    }
+
+    @Test
+    void UserTryToEditShopWithEmptyName_ShouldThrowException(){
+        User currentUser = new User(1L, "user", true, "password", "password", "email");
+        Organization shopOfUser = new Organization("shop");
+        shopOfUser.setId(1L);
+        shopOfUser.setOwner(currentUser);
+        currentUser.getOrganizationList().add(shopOfUser);
+        ShopEditDTO newShop = new ShopEditDTO();
+        newShop.setName("");
+        newShop.setDescription("newDescription");
+        try (MockedStatic<SecurityContext> mocked = mockStatic(SecurityContext.class)) {
+            mocked.when(SecurityContext::getCurrentUser).thenReturn(currentUser);
+            when(shopRepository.getOrganizationById(1L)).thenReturn(shopOfUser);
+            assertThrows(EmptyFieldException.class,() -> shopService.editShop(1L,newShop));
+
+        }
+
+    }
+    @Test
+    void UserTryToEditShopThatIsNull_ShouldThrowException(){
+        User currentUser = new User(1L, "user", true, "password", "password", "email");
+        Organization shopOfUser = new Organization("shop");
+        shopOfUser.setId(1L);
+        shopOfUser.setOwner(currentUser);
+        currentUser.getOrganizationList().add(shopOfUser);
+        ShopEditDTO newShop = new ShopEditDTO();
+        newShop.setName("nesShop");
+        newShop.setDescription("newDescription");
+        try (MockedStatic<SecurityContext> mocked = mockStatic(SecurityContext.class)) {
+            mocked.when(SecurityContext::getCurrentUser).thenReturn(currentUser);
+            when(shopRepository.getOrganizationById(1L)).thenReturn(null);
+            assertThrows(EntityNotFoundException.class,() -> shopService.editShop(1L,newShop));
+
+        }
+
+    }
+
+
+
+
+
 
 
 
