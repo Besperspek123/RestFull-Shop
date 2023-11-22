@@ -165,11 +165,11 @@
             <input type="hidden" name="productId" th:value="${product.id}" />
             <button type="submit" class="btn btn-primary">Add to Cart</button>
         </form>
-        <form method="post" th:action="@{deleteProduct(productId=${product.id})}">
+        <form th:if="${product.getOrganization().getOwner() == currentUser || #lists.contains(currentUser.roles.![name], 'ROLE_ADMIN')}" method="post"  th:action="@{deleteProduct(productId=${product.id})}">
             <input type="hidden" name="delete" value="delete" />
-            <button type="submit" class="btn btn-danger">Delete</button>
+            <button  type="submit" class="btn btn-danger">Delete</button>
         </form>
-        <form method="get" th:action="@{editProduct}">
+        <form th:if="${product.getOrganization().getOwner() == currentUser || #lists.contains(currentUser.roles.![name], 'ROLE_ADMIN')}" method="get" th:action="@{editProduct}">
             <input type="hidden" name="edit" value="edit" />
             <input type="hidden" name="shopId" th:value="${product.getOrganization().getId()}" />
             <input type="hidden" name="productId" th:value="${product.id}" />

@@ -371,6 +371,35 @@ class ShopServiceTest {
 
     }
 
+    @Test
+    void getShopDetails_ShouldReturnShopDetails(){
+        User currentUser = new User(1L, "user", true, "password", "password", "email");
+        Organization expectedShop = new Organization();
+        expectedShop.setId(1L);
+        expectedShop.setName("shop");
+        expectedShop.setDescription("description");
+        expectedShop.setOwner(currentUser);
+        currentUser.getOrganizationList().add(expectedShop);
+        when(shopRepository.getOrganizationById(1L)).thenReturn(expectedShop);
+        Organization actualShop = shopService.getShopDetails(1L);
+        assertNotNull(actualShop);
+        assertEquals(actualShop,expectedShop);
+        verify(shopRepository).getOrganizationById(1L);
+    }
+    @Test
+    void getShopDetailsThatIdIsZero_ShouldReturnNull(){
+        User currentUser = new User(1L, "user", true, "password", "password", "email");
+        Organization expectedShop = new Organization();
+        expectedShop.setName("shop");
+        expectedShop.setDescription("description");
+        expectedShop.setOwner(currentUser);
+        currentUser.getOrganizationList().add(expectedShop);
+        when(shopRepository.getOrganizationById(0)).thenReturn(null);
+        Organization actualShop = shopService.getShopDetails(0);
+        assertNull(actualShop);
+        verify(shopRepository).getOrganizationById(0);
+    }
+
 
 
 

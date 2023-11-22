@@ -113,8 +113,10 @@ public class ShopService {
 
     public void deleteShop(long shopId) throws EntityNotFoundException {
         User currentUser = SecurityContext.getCurrentUser();
-        if(shopRepository.getOrganizationById(shopId).getOwner() == currentUser
-                || currentUser.getRoles().contains(Role.ROLE_ADMIN)){
+        Organization actualShop = shopRepository.getOrganizationById(shopId);
+        if(!currentUser.getRoles().contains(Role.ROLE_ADMIN) && actualShop.getOwner() != currentUser){
+            throw new AccessDeniedException("You dont have access");
+        }
             List<Product> productListForDeletedShop = productService.getProductsFromShop(shopId);
             for (Product product:productListForDeletedShop
             ) {
@@ -145,7 +147,6 @@ public class ShopService {
 
 
 
-        }
 
     public List<Organization> getAllModerationShops(){
         return shopRepository.getAllByActivityIsFalse();

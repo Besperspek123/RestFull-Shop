@@ -3,6 +3,7 @@ package spring.rest.shop.springrestshop.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -73,13 +74,8 @@ public class ShopController {
     }
 
     @PostMapping("/deleteShop")
-    public String deleteShop(@RequestParam("shopId") int shopId, Model model, Authentication authentication) throws EntityNotFoundException {
-        User currentUser = userService.findUserByUsername(authentication.getName());
-        if (shopService.getShopDetails(shopId).getOwner() == currentUser
-                || currentUser.getRoles().stream().anyMatch(role -> role.name().equals("ROLE_ADMIN"))) {
-            shopService.deleteShop(shopId);
-        }
-
+    public String deleteShop(@RequestParam("shopId") int shopId){
+        shopService.deleteShop(shopId);
         return "redirect:/shop";
     }
 

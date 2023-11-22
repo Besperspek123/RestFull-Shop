@@ -162,12 +162,12 @@ public class ProductService {
     public void deleteProductInShop(long productId){
         User currentUser = SecurityContext.getCurrentUser();
         Product product = productRepository.getById(productId);
-        if(product.getOrganization().getOwner() == currentUser
-                || currentUser.getRoles().stream().anyMatch(role -> role.name().equals("ROLE_ADMIN"))){
-
-            product.setOrganization(null);
-            productRepository.save(product);
+        if(product.getOrganization().getOwner() != currentUser
+                || currentUser.getRoles().stream().noneMatch(role -> role.name().equals("ROLE_ADMIN"))){
+            throw new AccessDeniedException("You dont have permission to delete this shop");
         }
+        product.setOrganization(null);
+        productRepository.save(product);
     }
     public List<Product> findProductByName(String name){
 
