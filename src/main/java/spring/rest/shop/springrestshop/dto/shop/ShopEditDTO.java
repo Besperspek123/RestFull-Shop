@@ -12,5 +12,7 @@ public class ShopEditDTO {
         this.name = shop.getName();
         this.description = shop.getDescription();
     }
+    public ShopEditDTO() {
+    }
 }
 

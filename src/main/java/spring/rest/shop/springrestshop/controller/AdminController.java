@@ -82,14 +82,13 @@ public class AdminController {
         return "admin/shops";
     }
     @PostMapping("/banUser")
-    public String banUser(@RequestParam(name = "userId")long userId,Authentication authentication) throws UserAlreadyBannedException {
+    public String banUser(@RequestParam(name = "userId")long userId){
         User userForBan = userService.getUserById(userId);
-        User currentUser = userService.findUserByUsername(authentication.getName());
         userService.banUser(userForBan);
         return "redirect:/admin/userInfo?userId=" + userId;
     }
     @PostMapping("/unbanUser")
-    public String unbanUser(@RequestParam(name = "userId")long userId,Authentication authentication) throws UserNotBannedException {
+    public String unbanUser(@RequestParam(name = "userId")long userId){
         User userForUnban = userService.getUserById(userId);
         userService.unbanUser(userForUnban);
         return "redirect:/admin/userInfo?userId=" + userId;
@@ -165,7 +164,7 @@ public class AdminController {
 
     @GetMapping("/viewShopsUser")
     public String viewShopsUser(@RequestParam(name = "userId") long userId, Model model){
-        List<Organization> userShopList = shopService.getListActivityShopForCurrentUser(userService.getUserById(userId));
+        List<Organization> userShopList = shopService.getListActivityShopForUser(userService.getUserById(userId));
         model.addAttribute("allShops",userShopList);
         return "admin/shops";
     }

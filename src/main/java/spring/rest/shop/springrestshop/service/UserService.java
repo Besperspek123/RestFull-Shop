@@ -101,7 +101,7 @@ public class UserService implements UserDetailsService {
         if (!givenUser.getPassword().equals(givenUser.getPasswordConfirm())) {
             throw new UserPasswordAndConfirmPasswordIsDifferentException("Your password and confirm password are different");
         }
-            if(givenUser.getPassword() == null || givenUser.getPassword().isEmpty()){
+            if(givenUser.getPassword().isEmpty()){
                 givenUser.setPassword(userRepository.findById((long) givenUser.getId()).getPassword());
             }
                 else givenUser.setPassword(bCryptPasswordEncoder.encode(givenUser.getPassword()));
@@ -191,30 +191,29 @@ public class UserService implements UserDetailsService {
 
     public void unbanUser(User userForUnban) throws UserNotBannedException {
         User currentUser = SecurityContext.getCurrentUser();
+        if(userForUnban == null){
+            throw new NullPointerException("User cant be null");
+        }
+        if(userForUnban.getId()==null){
+            throw new NullPointerException("Id cant be null");
+        }
+        if(!currentUser.getRoles().contains(Role.ROLE_ADMIN)){
+            throw new PermissionForBanAndUnbanUserDeniedException("You don`t have permissions for ban/unban users");
+        }
         if(userForUnban.getActivity()){
             throw new UserNotBannedException("User with username: " + userForUnban.getUsername() + "is not banned");
         }
-        try {
-            if(currentUser.getRoles().contains(Role.ROLE_ADMIN)){
-                userForUnban.setActivity(true);
-                userRepository.save(userForUnban);
-            }
-            else throw new PermissionForBanAndUnbanUserDeniedException("You don`t have permissions for ban/unban users");
-        }
-        catch (PermissionForBanAndUnbanUserDeniedException e){
-            e.printStackTrace();
-            System.out.println(e.getMessage());
-        }
+        userForUnban.setActivity(true);
+        userRepository.save(userForUnban);
     }
 
     public void addBalance(long userId, long deposit) {
-        User user = getUserById(userId);
         if(!SecurityContext.getCurrentUser().getRoles().contains(Role.ROLE_ADMIN)){
             throw new AccessDeniedException("You don`t have permission");
         }
-
-        if(user== null){
-            throw new UsernameNotFoundException("Don`t have user with ID: " + userId);
+        User user = getUserById(userId);
+        if(user == null){
+            throw new UsernameNotFoundException("There is not user with ID: " + userId);
         }
         user.setBalance(user.getBalance() + deposit);
         userRepository.save(user);

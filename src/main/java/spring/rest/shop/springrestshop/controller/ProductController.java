@@ -63,10 +63,10 @@ public class ProductController {
         }
 
         @PostMapping("/deleteProduct")
-        public String deleteProduct(@RequestParam("productId") long productId) throws EntityNotFoundException {
+        public String deleteProduct(@RequestParam("productId") long productId) {
             Product product = productService.getProductDetails(productId);
             long shopId = product.getOrganization().getId();
-                productService.deleteProductInShop(product.getId());
+                productService.deleteProductInShop(productId);
             return "redirect:/viewShop?shopId=" + shopId;
         }
 

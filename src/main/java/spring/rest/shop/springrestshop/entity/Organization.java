@@ -13,6 +13,13 @@ import java.util.List;
 @Table(name = "organization")
 @Data
 public class Organization {
+    public Organization(String name) {
+        this.name = name;
+    }
+
+    public Organization() {
+    }
+
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,15 +40,14 @@ public class Organization {
     @Column(name = "activity")
     private boolean activity;
 
-
     @JsonIgnore
     @OneToMany(mappedBy = "organization")
     private List<Product> productList;
 
-
-
     @JsonIgnore
     private ImageIcon logotype;
+
+
 
     @Override
     public String toString() {
